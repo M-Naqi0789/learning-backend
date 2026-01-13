@@ -1,65 +1,171 @@
-import express from "express";
-import morgan from "morgan";
-import cors from "cors";
-import { config } from "dotenv";
+const express = require('express');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-config({
-  path: "./.env",
-});
-
-const port = process.env.PORT;
 const app = express();
+app.use(express.json()); 
 
-app.use(express.json());
-app.use(morgan("dev"));
-app.use(cors());
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch(err => console.error("Connection error:", err));
 
-app.get("/", (req, res) => {
-  return res.status(200).send({
-    statusCode: 200,
-    message: "Welcome to Back End using Node JS",
-  });
+app.post('/users', async (req, res) => {
+  try {
+    const newUser = new User(req.body);
+    await newUser.save();
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
-// basic set up done 
-// node syntax - done 
-// express routes - req (incoming data), res (outgoing data), next (moving to next route synchronously)
-// http method - get, ost, put/patch, delete. (CRUD)
-// middleware - functions between req and res data 
 
-// eg route :
- 
-// app.post("/todo/add", (req, res) => {
-//   const { todoValue } = req?.body;
-//   console.log(`Body data: ${todoValue}`);
+// mongodb + mongoose 
 
-//   try {
-//     // 400:
-//     if (!todoValue) {
-//       return res.status(400).send({
-//         status: false,
-//         message: "Todo value is required.",
-//       });
-//     }
+// 1) CONNECTING TO THE DB
 
-//     // 200:
-//     const fetchTodos = [...todoBucket];
-//     fetchTodos.push(todoValue);
-//     todoBucket = fetchTodos;
+// native driver vs mongoose
+// native = raw mongo, more control, more pain
+// mongoose = ODM, schemas + validation, easier life
 
-//     return res.status(200).send({
-//       status: true,
-//       message: "Todo added successfully",
-//     });
-//   } catch (error) {
-//     // 500:
-//     return res.status(500).send({
-//       status: false,
-//       message: "Server is not working!",
-//     });
-//   }
-// });
+// connection string
+// mongodb+srv://user:pass@cluster/db
 
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
+// connect
+// await mongoose.connect(process.env.MONGO_URI)
+
+// events
+// db.on("connected") -> we’re good
+// db.on("error") -> something’s on fire
+// db.on("disconnected") -> connection dropped
+
+
+// 2) SCHEMAS & MODELS
+
+// schema = shape of your data
+
+// types
+// String, Number, Boolean, Date
+// ObjectId for references
+
+// timestamps
+// { timestamps: true }
+// auto gives createdAt and updatedAt
+
+// validation
+// required, min, max, match
+// plus custom validators
+
+// virtuals
+// fields that don’t exist in DB
+// computed stuff like fullName
+
+// methods
+// functions on a single document
+
+// statics
+// functions on the model itself
+
+
+// 3) CRUD 
+
+// create
+// Model.create()
+// new Model().save()
+// insertMany()
+
+// read
+// find()
+// findOne()
+// findById()
+
+// update
+// updateOne()
+// findByIdAndUpdate()
+// $set, $inc, $push, etc
+
+// delete
+// deleteOne()
+// findByIdAndDelete()
+
+// query helpers
+// .sort()
+// .limit()
+// .skip()
+// .select()
+
+
+// 4) RELATIONS & STRUCTURE
+
+// embed
+// put data inside the document
+// fast reads
+
+// reference
+// store ObjectId
+// link to another collection
+
+// populate
+// mongoose fake-joins for referenced docs
+
+// lean()
+// skip mongoose wrappers
+// get plain JS objects
+// faster when you only need data
+
+// transactions
+// when multiple writes must all succeed or all fail
+// ACID stuff
+
+
+// 5) AGGREGATION 
+
+// pipelines
+// array of steps mongo runs in order
+
+// $match -> filter
+// $group -> group data
+// $sort -> sort
+// $project -> reshape fields
+// $unwind -> explode arrays
+// $lookup -> join collections
+
+// accumulators
+// $sum, $avg, $push, etc
+
+
+// 6) PERFORMANCE
+
+// indexes
+// make queries fast
+// single
+// compound
+// unique
+// TTL (auto delete OTPs)
+
+// explain()
+// see if mongo is using index or doing full scan
+// COLLSCAN = slow garbage
+
+// capped collections
+// fixed size logs
+
+// connection pooling
+// too many open connections = server dies
+
+
+// 7) TOOLS
+
+// Atlas
+// cloud mongo
+// clusters, users, IP whitelist
+
+// Compass
+// GUI to view and test data
+
+// migrations
+// because schemas change
+// and prod data is scary
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
